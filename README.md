@@ -1,17 +1,36 @@
 # npost
 
-A new Flutter project.
+Flutter app with automated GitHub Pages deploy.
 
-## Getting Started
+## GitHub Pages
 
-This project is a starting point for a Flutter application.
+The repository is configured to build the Flutter web app on every push to `main`
+and publish the generated files to the `prod` branch.
 
-A few resources to get you started if this is your first Flutter project:
+GitHub Pages settings for this repository should use:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Source: `Deploy from a branch`
+- Branch: `prod`
+- Folder: `/ (root)`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The expected Pages URL is:
+
+- `https://mauriciosiqueira.github.io/Npost.Frontend/`
+
+The workflow builds with:
+
+- `flutter build web --release --base-href /Npost.Frontend/`
+
+## Development
+
+Install dependencies:
+
+```bash
+flutter pub get
+```
+
+Run locally:
+
+```bash
+flutter run
+```
