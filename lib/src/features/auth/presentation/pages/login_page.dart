@@ -234,12 +234,15 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             if (_loginErrorMessage != null) ...[
                               const SizedBox(height: 12),
-                              Text(
-                                _loginErrorMessage!,
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.w600,
+                              Center(
+                                child: Text(
+                                  _loginErrorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.red.shade700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
