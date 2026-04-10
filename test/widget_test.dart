@@ -40,7 +40,10 @@ class _InMemoryAuthLocalDataSource extends AuthLocalDataSource {
   AuthSession? _session;
 
   @override
-  Future<void> saveSession(AuthSession session) async {
+  Future<void> saveSession(
+    AuthSession session, {
+    required bool persistSession,
+  }) async {
     _session = session;
   }
 

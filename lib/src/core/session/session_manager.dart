@@ -13,7 +13,12 @@ class SessionManager {
       return const {};
     }
 
-    return {'Authorization': 'Bearer $token'};
+    final trimmed = token.trim();
+    if (trimmed.toLowerCase().startsWith('bearer ')) {
+      return {'Authorization': trimmed};
+    }
+
+    return {'Authorization': 'Bearer $trimmed'};
   }
 
   void setSession(AuthSession session) {

@@ -11,6 +11,7 @@ class AuthService {
   static final Uri _apiBaseUri = Uri.parse('http://127.0.0.1:6002');
   static final Uri _loginUri = _apiBaseUri.resolve('/v1/user/login');
   static final Uri _signUpUri = _apiBaseUri.resolve('/v1/user/create');
+  static final Uri _logoutUri = _apiBaseUri.resolve('/v1/user/logout');
 
   Future<LoginResponseDto> login(LoginRequestDto input) async {
     final client = HttpClient();
@@ -91,6 +92,29 @@ class AuthService {
     }
   }
 
+  Future<void> logout(String? jwt) async {
+    if (jwt == null || jwt.isEmpty) {
+      return;
+    }
+
+    final client = HttpClient();
+
+    try {
+      final request = await client.postUrl(_logoutUri);
+      request.headers.contentType = ContentType.json;
+      request.headers.set(HttpHeaders.authorizationHeader, _asBearer(jwt));
+
+      final response = await request.close();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw const AuthException(message: 'Falha ao finalizar a sessao.');
+      }
+    } on SocketException {
+      throw const AuthException(message: 'Falha ao finalizar a sessao.');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   String? _extractApiErrorMessage(String responseBody) {
     final trimmed = responseBody.trim();
     if (trimmed.isEmpty) {
@@ -127,6 +151,15 @@ class AuthService {
     }
 
     return trimmed;
+  }
+
+  String _asBearer(String token) {
+    final trimmed = token.trim();
+    if (trimmed.toLowerCase().startsWith('bearer ')) {
+      return trimmed;
+    }
+
+    return 'Bearer $trimmed';
   }
 }
 

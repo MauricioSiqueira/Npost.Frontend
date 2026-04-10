@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../data/dtos/login_request_dto.dart';
-import '../../data/dtos/login_response_dto.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_service.dart';
+import 'home_page.dart';
 import 'sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -24,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   String? _loginErrorMessage;
-  LoginResponseDto? _loginResponse;
 
   bool get _canSubmit {
     return _emailController.text.trim().isNotEmpty &&
@@ -37,13 +36,6 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController.addListener(_onFormChanged);
     _passwordController.addListener(_onFormChanged);
-    final session = widget.authRepository.currentSession;
-    if (session != null) {
-      _loginResponse = LoginResponseDto(
-        userName: session.userName,
-        jwt: session.jwt,
-      );
-    }
   }
 
   @override
@@ -74,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final output = await widget.authRepository.login(
+      await widget.authRepository.login(
         LoginRequestDto(
           email: _emailController.text.trim(),
           password: _passwordController.text,
@@ -86,14 +78,12 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      setState(() {
-        _loginResponse = output;
-        _loginErrorMessage = null;
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Bem-vindo, ${output.userName}.')));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => HomePage(authRepository: widget.authRepository),
+        ),
+        (route) => false,
+      );
     } on AuthException catch (error) {
       if (!mounted) {
         return;
@@ -252,39 +242,6 @@ class _LoginPageState extends State<LoginPage> {
                                 )
                               : const Text('Log In'),
                         ),
-                        if (_loginResponse != null) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withAlpha(20),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: theme.colorScheme.primary.withAlpha(60),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Usuario autenticado',
-                                  style: theme.textTheme.labelLarge,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Nome: ${_loginResponse!.userName}',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'JWT: ${_maskJwt(_loginResponse!.jwt)}',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 26),
                         Row(
                           children: [
@@ -376,14 +333,6 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  String _maskJwt(String jwt) {
-    if (jwt.length <= 14) {
-      return jwt;
-    }
-
-    return '${jwt.substring(0, 10)}...${jwt.substring(jwt.length - 4)}';
   }
 }
 

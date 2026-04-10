@@ -42,19 +42,19 @@ class AuthRepository {
     final response = await _authService.login(input);
     final session = AuthSession(userName: response.userName, jwt: response.jwt);
 
-    if (persistSession) {
-      await _localDataSource.saveSession(session);
-    } else {
-      await _localDataSource.clearSession();
-    }
+    await _localDataSource.saveSession(session, persistSession: persistSession);
 
     _sessionManager.setSession(session);
     return response;
   }
 
   Future<void> logout() async {
-    await _localDataSource.clearSession();
-    _sessionManager.clear();
+    try {
+      await _authService.logout(_sessionManager.jwt);
+    } finally {
+      await _localDataSource.clearSession();
+      _sessionManager.clear();
+    }
   }
 
   Future<void> signUp(SignUpRequestDto input) {
