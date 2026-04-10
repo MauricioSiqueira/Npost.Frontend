@@ -2,6 +2,7 @@ import '../../../../core/session/auth_session.dart';
 import '../../../../core/session/session_manager.dart';
 import '../dtos/login_request_dto.dart';
 import '../dtos/login_response_dto.dart';
+import '../dtos/signup_request_dto.dart';
 import '../datasources/local/auth_local_data_source.dart';
 import '../services/auth_service.dart';
 
@@ -39,10 +40,7 @@ class AuthRepository {
     required bool persistSession,
   }) async {
     final response = await _authService.login(input);
-    final session = AuthSession(
-      userName: response.userName,
-      jwt: response.jwt,
-    );
+    final session = AuthSession(userName: response.userName, jwt: response.jwt);
 
     if (persistSession) {
       await _localDataSource.saveSession(session);
@@ -57,5 +55,9 @@ class AuthRepository {
   Future<void> logout() async {
     await _localDataSource.clearSession();
     _sessionManager.clear();
+  }
+
+  Future<void> signUp(SignUpRequestDto input) {
+    return _authService.signUp(input);
   }
 }
