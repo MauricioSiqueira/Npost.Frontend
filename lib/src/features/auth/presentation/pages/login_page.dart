@@ -7,9 +7,16 @@ import 'home_page.dart';
 import 'sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.authRepository});
+  const LoginPage({
+    super.key,
+    required this.authRepository,
+    required this.onThemeChanged,
+    required this.onToggleTheme,
+  });
 
   final AuthRepository authRepository;
+  final ValueChanged<bool> onThemeChanged;
+  final Future<void> Function() onToggleTheme;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -73,6 +80,9 @@ class _LoginPageState extends State<LoginPage> {
         ),
         persistSession: _rememberMe,
       );
+      widget.onThemeChanged(
+        widget.authRepository.currentSession?.darkMode ?? false,
+      );
 
       if (!mounted) {
         return;
@@ -80,7 +90,10 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
-          builder: (_) => HomePage(authRepository: widget.authRepository),
+          builder: (_) => HomePage(
+            authRepository: widget.authRepository,
+            onToggleTheme: widget.onToggleTheme,
+          ),
         ),
         (route) => false,
       );

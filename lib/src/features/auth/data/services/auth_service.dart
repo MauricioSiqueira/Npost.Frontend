@@ -12,6 +12,9 @@ class AuthService {
   static final Uri _loginUri = _apiBaseUri.resolve('/v1/user/login');
   static final Uri _signUpUri = _apiBaseUri.resolve('/v1/user/create');
   static final Uri _logoutUri = _apiBaseUri.resolve('/v1/user/logout');
+  static final Uri _themePreferenceUri = _apiBaseUri.resolve(
+    '/v1/user/preferences/theme',
+  );
 
   Future<LoginResponseDto> login(LoginRequestDto input) async {
     final client = HttpClient();
@@ -110,6 +113,50 @@ class AuthService {
       }
     } on SocketException {
       throw const AuthException(message: 'Falha ao finalizar a sessao.');
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<bool> updateThemePreference({
+    required String jwt,
+    required bool darkMode,
+  }) async {
+    final client = HttpClient();
+
+    try {
+      final request = await client.putUrl(_themePreferenceUri);
+      request.headers.contentType = ContentType.json;
+      request.headers.set(HttpHeaders.authorizationHeader, _asBearer(jwt));
+      request.write(jsonEncode({'darkMode': darkMode}));
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw AuthException(
+          message:
+              _extractApiErrorMessage(responseBody) ??
+              'Nao foi possivel atualizar o tema.',
+        );
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is! Map<String, dynamic>) {
+        throw const AuthException(
+          message: 'Resposta invalida ao atualizar o tema.',
+        );
+      }
+
+      return decoded['darkMode'] == true || decoded['DarkMode'] == true;
+    } on SocketException {
+      throw const AuthException(
+        message: 'Nao foi possivel conectar ao servico para atualizar o tema.',
+      );
+    } on FormatException {
+      throw const AuthException(
+        message: 'Resposta invalida ao atualizar o tema.',
+      );
     } finally {
       client.close(force: true);
     }

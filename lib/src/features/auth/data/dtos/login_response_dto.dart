@@ -1,7 +1,14 @@
 class LoginResponseDto {
-  const LoginResponseDto({required this.userName, required this.jwt});
+  const LoginResponseDto({
+    required this.userName,
+    required this.email,
+    required this.darkMode,
+    required this.jwt,
+  });
 
   final String userName;
+  final String email;
+  final bool darkMode;
   final String jwt;
 
   factory LoginResponseDto.fromJson(Map<String, dynamic> json) {
@@ -10,6 +17,9 @@ class LoginResponseDto {
     return LoginResponseDto(
       userName: (json['name'] ?? json['nome'] ?? json['userName'] ?? '')
           .toString(),
+      email: (json['email'] ?? json['mail'] ?? json['userEmail'] ?? '')
+          .toString(),
+      darkMode: json['darkMode'] == true || json['DarkMode'] == true,
       jwt: _normalizeToken(rawToken),
     );
   }

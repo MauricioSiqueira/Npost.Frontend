@@ -40,12 +40,36 @@ class AuthRepository {
     required bool persistSession,
   }) async {
     final response = await _authService.login(input);
-    final session = AuthSession(userName: response.userName, jwt: response.jwt);
+    final session = AuthSession(
+      userName: response.userName,
+      email: response.email.isNotEmpty ? response.email : input.email,
+      darkMode: response.darkMode,
+      jwt: response.jwt,
+    );
 
     await _localDataSource.saveSession(session, persistSession: persistSession);
 
     _sessionManager.setSession(session);
     return response;
+  }
+
+  Future<bool> updateThemePreference(bool darkMode) async {
+    final currentSession = _sessionManager.currentSession;
+    final jwt = currentSession?.jwt;
+    if (currentSession == null || jwt == null || jwt.isEmpty) {
+      throw const AuthException(message: 'Sessao invalida.');
+    }
+
+    final updatedDarkMode = await _authService.updateThemePreference(
+      jwt: jwt,
+      darkMode: darkMode,
+    );
+    final updatedSession = currentSession.copyWith(darkMode: updatedDarkMode);
+
+    await _localDataSource.updateStoredSession(updatedSession);
+    _sessionManager.setSession(updatedSession);
+
+    return updatedDarkMode;
   }
 
   Future<void> logout() async {
