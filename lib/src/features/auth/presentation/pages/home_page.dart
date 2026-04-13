@@ -160,6 +160,27 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<bool> _deleteNotation(String notationId) async {
+    try {
+      await _notationRepository.deleteNotation(notationId);
+      return true;
+    } on NotationException catch (error) {
+      if (error.isUnauthorized) {
+        await _handleUnauthorizedSession();
+        return false;
+      }
+
+      if (!mounted) {
+        return false;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+      return false;
+    }
+  }
+
   Future<void> _openSearchPage() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -274,7 +295,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _TopIconButton(
-              tooltip: 'Pesquisar anotacoes',
+              tooltip: 'Pesquisar anotacões',
               onTap: () {
                 _openSearchPage();
               },
@@ -284,7 +305,7 @@ class _HomePageState extends State<HomePage> {
               iconColor: theme.colorScheme.onSurface,
             ),
             _TopIconButton(
-              tooltip: 'Nova anotacao',
+              tooltip: 'Nova anotacão',
               onTap: _createNotation,
               icon: Icons.edit_outlined,
               surfaceColor: surfaceColor,
@@ -310,7 +331,7 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: PopupMenuButton<_UserMenuAction>(
                           enabled: !_isLoggingOut,
-                          tooltip: 'Menu do usuario',
+                          tooltip: 'Menu do usuário',
                           color: surfaceColor,
                           surfaceTintColor: surfaceColor,
                           shape: RoundedRectangleBorder(
@@ -423,7 +444,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Text('Suas anotacoes', style: theme.textTheme.headlineLarge),
+                  Text('Suas anotacões', style: theme.textTheme.headlineLarge),
                   const SizedBox(height: 16),
                   Expanded(
                     child: FutureBuilder<List<NotationListItem>>(
@@ -448,7 +469,7 @@ class _HomePageState extends State<HomePage> {
 
                           final message = exception is NotationException
                               ? exception.message
-                              : 'Nao foi possivel carregar as anotacoes.';
+                              : 'Não foi possível carregar as anotacões.';
 
                           return Center(
                             child: Column(
@@ -473,7 +494,7 @@ class _HomePageState extends State<HomePage> {
                         if (notations.isEmpty) {
                           return Center(
                             child: Text(
-                              'Voce ainda nao possui anotacoes.',
+                              'Você ainda não possui anotacões.',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyLarge,
                             ),
@@ -488,53 +509,81 @@ class _HomePageState extends State<HomePage> {
                             final isOpening =
                                 _activeNotationId == notation.notationId;
 
-                            return Material(
-                              color: surfaceColor,
-                              borderRadius: BorderRadius.circular(18),
-                              child: InkWell(
+                            return Dismissible(
+                              key: ValueKey('notation-${notation.notationId}'),
+                              direction: isOpening
+                                  ? DismissDirection.none
+                                  : DismissDirection.endToStart,
+                              background: const SizedBox.shrink(),
+                              secondaryBackground:
+                                  const _DeleteSwipeBackground(),
+                              confirmDismiss: (_) {
+                                return _deleteNotation(notation.notationId);
+                              },
+                              onDismissed: (_) {
+                                final updatedNotations =
+                                    List<NotationListItem>.from(notations)
+                                      ..removeWhere(
+                                        (item) =>
+                                            item.notationId ==
+                                            notation.notationId,
+                                      );
+
+                                setState(() {
+                                  _notationsFuture = Future.value(
+                                    updatedNotations,
+                                  );
+                                });
+                              },
+                              child: Material(
+                                color: surfaceColor,
                                 borderRadius: BorderRadius.circular(18),
-                                onTap: isOpening
-                                    ? null
-                                    : () => _openNotation(notation.notationId),
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    color: surfaceColor,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: outlineColor),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: isOpening
+                                      ? null
+                                      : () =>
+                                            _openNotation(notation.notationId),
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      color: surfaceColor,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: outlineColor),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            notation.title.isEmpty
-                                                ? 'Sem titulo'
-                                                : notation.title,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: titleStyle,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              notation.title.isEmpty
+                                                  ? 'Sem título'
+                                                  : notation.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: titleStyle,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        isOpening
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              )
-                                            : Icon(
-                                                Icons.chevron_right_rounded,
-                                                size: 20,
-                                                color: secondaryTextColor,
-                                              ),
-                                      ],
+                                          const SizedBox(width: 12),
+                                          isOpening
+                                              ? const SizedBox(
+                                                  width: 18,
+                                                  height: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                )
+                                              : Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  size: 20,
+                                                  color: secondaryTextColor,
+                                                ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -550,6 +599,28 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DeleteSwipeBackground extends StatelessWidget {
+  const _DeleteSwipeBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0x14E53935),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0x66E53935)),
+      ),
+      child: const Icon(
+        Icons.delete_outline_rounded,
+        color: Color(0xFFD32F2F),
+        size: 22,
       ),
     );
   }

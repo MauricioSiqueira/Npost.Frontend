@@ -148,6 +148,27 @@ class _NotationSearchPageState extends State<NotationSearchPage> {
     }
   }
 
+  Future<bool> _deleteNotation(String notationId) async {
+    try {
+      await widget.notationRepository.deleteNotation(notationId);
+      return true;
+    } on NotationException catch (error) {
+      if (error.isUnauthorized) {
+        await _handleUnauthorizedSession();
+        return false;
+      }
+
+      if (!mounted) {
+        return false;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+      return false;
+    }
+  }
+
   Future<void> _handleUnauthorizedSession() async {
     if (_isHandlingUnauthorized) {
       return;
@@ -311,50 +332,90 @@ class _NotationSearchPageState extends State<NotationSearchPage> {
         final notation = _notations[index];
         final isOpening = _activeNotationId == notation.notationId;
 
-        return Material(
-          color: tileBackground,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
+        return Dismissible(
+          key: ValueKey('search-notation-${notation.notationId}'),
+          direction: isOpening
+              ? DismissDirection.none
+              : DismissDirection.endToStart,
+          background: const SizedBox.shrink(),
+          secondaryBackground: const _DeleteSwipeBackground(),
+          confirmDismiss: (_) => _deleteNotation(notation.notationId),
+          onDismissed: (_) {
+            setState(() {
+              _notations = _notations
+                  .where((item) => item.notationId != notation.notationId)
+                  .toList();
+            });
+          },
+          child: Material(
+            color: tileBackground,
             borderRadius: BorderRadius.circular(18),
-            onTap: isOpening ? null : () => _openNotation(notation),
-            child: Ink(
-              decoration: BoxDecoration(
-                color: tileBackground,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: outlineColor),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: isOpening ? null : () => _openNotation(notation),
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: tileBackground,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: outlineColor),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        notation.title.isEmpty ? 'Sem titulo' : notation.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notation.title.isEmpty
+                              ? 'Sem titulo'
+                              : notation.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    isOpening
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.chevron_right_rounded, size: 20),
-                  ],
+                      const SizedBox(width: 12),
+                      isOpening
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.chevron_right_rounded, size: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _DeleteSwipeBackground extends StatelessWidget {
+  const _DeleteSwipeBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0x14E53935),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0x66E53935)),
+      ),
+      child: const Icon(
+        Icons.delete_outline_rounded,
+        color: Color(0xFFD32F2F),
+        size: 22,
+      ),
     );
   }
 }

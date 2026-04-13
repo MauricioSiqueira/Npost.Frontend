@@ -66,6 +66,15 @@ class NotationRepository {
     );
   }
 
+  Future<void> deleteNotation(String notationId) {
+    return _withAuthRetry(
+      () => _notationService.deleteNotation(
+        notationId,
+        _authRepository.authorizationHeaders,
+      ),
+    );
+  }
+
   Future<T> _withAuthRetry<T>(Future<T> Function() operation) async {
     final canUseCurrentToken = await _authRepository.ensureValidAccessToken();
     if (!canUseCurrentToken) {

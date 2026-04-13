@@ -163,7 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                               return 'Informe seu email.';
                             }
                             if (!email.contains('@')) {
-                              return 'Informe um email valido.';
+                              return 'Informe um email válido.';
                             }
                             return null;
                           },

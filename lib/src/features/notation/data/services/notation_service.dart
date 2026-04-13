@@ -221,6 +221,35 @@ class NotationService {
     }
   }
 
+  Future<void> deleteNotation(
+    String notationId,
+    Map<String, String> headers,
+  ) async {
+    final client = HttpClient();
+
+    try {
+      final request = await client.deleteUrl(
+        _apiBaseUri.resolve('/v1/notation/$notationId'),
+      );
+      _applyHeaders(request, headers);
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      _throwIfRequestFailed(
+        response.statusCode,
+        responseBody,
+        defaultMessage: 'Nao foi possivel excluir a anotacao.',
+      );
+    } on SocketException {
+      throw const NotationException(
+        'Nao foi possivel conectar ao servico de anotacoes.',
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   void _applyHeaders(HttpClientRequest request, Map<String, String> headers) {
     headers.forEach(request.headers.set);
   }

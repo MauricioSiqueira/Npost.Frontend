@@ -316,7 +316,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     return 'Informe o email.';
                   }
                   if (!_emailRegex.hasMatch(email)) {
-                    return 'Informe um email valido.';
+                    return 'Informe um email válido.';
                   }
                   return null;
                 },
@@ -369,11 +369,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     return 'Informe a senha.';
                   }
                   if (!_passwordRegex.hasMatch(password)) {
-                    return 'Use 8+ caracteres com maiuscula, minuscula, numero e especial.';
+                    return 'Use 8+ caracteres com maiúscula, minúscula, numêro e especial.';
                   }
                   if (_confirmPasswordController.text.isNotEmpty &&
                       password != _confirmPasswordController.text) {
-                    return 'As senhas nao coincidem.';
+                    return 'As senhas não coincidem.';
                   }
                   return null;
                 },
@@ -403,10 +403,10 @@ class _SignUpPageState extends State<SignUpPage> {
                     return 'Confirme a senha.';
                   }
                   if (!_passwordRegex.hasMatch(confirmPassword)) {
-                    return 'A confirmacao deve atender a regra da senha.';
+                    return 'A confirmacão deve atender a regra da senha.';
                   }
                   if (confirmPassword != _passwordController.text) {
-                    return 'As senhas nao coincidem.';
+                    return 'As senhas não coincidem.';
                   }
                   return null;
                 },
@@ -666,13 +666,13 @@ class _SignUpSuccessPanel extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Enviaremos um email de confirmacao de criacao de conta para $email.',
+              'Enviaremos um email de confirmacão de criação de conta para $email.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Verifique essa caixa de entrada para concluir a ativacao.',
+              'Verifique essa caixa de entrada para concluir a ativação.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
