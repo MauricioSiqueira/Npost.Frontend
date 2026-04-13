@@ -4,15 +4,19 @@ class LoginResponseDto {
     required this.email,
     required this.darkMode,
     required this.jwt,
+    required this.refreshToken,
   });
 
   final String userName;
   final String email;
   final bool darkMode;
   final String jwt;
+  final String refreshToken;
 
   factory LoginResponseDto.fromJson(Map<String, dynamic> json) {
     final rawToken = (json['jwt'] ?? json['token'] ?? '').toString();
+    final rawRefreshToken =
+        (json['refreshToken'] ?? json['refresh_token'] ?? '').toString();
 
     return LoginResponseDto(
       userName: (json['name'] ?? json['nome'] ?? json['userName'] ?? '')
@@ -21,6 +25,7 @@ class LoginResponseDto {
           .toString(),
       darkMode: json['darkMode'] == true || json['DarkMode'] == true,
       jwt: _normalizeToken(rawToken),
+      refreshToken: rawRefreshToken.trim(),
     );
   }
 

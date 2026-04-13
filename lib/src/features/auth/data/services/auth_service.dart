@@ -10,6 +10,7 @@ class AuthService {
 
   static final Uri _apiBaseUri = Uri.parse('http://127.0.0.1:6002');
   static final Uri _loginUri = _apiBaseUri.resolve('/v1/user/login');
+  static final Uri _refreshUri = _apiBaseUri.resolve('/v1/user/refresh');
   static final Uri _signUpUri = _apiBaseUri.resolve('/v1/user/create');
   static final Uri _logoutUri = _apiBaseUri.resolve('/v1/user/logout');
   static final Uri _themePreferenceUri = _apiBaseUri.resolve(
@@ -42,9 +43,11 @@ class AuthService {
       }
 
       final output = LoginResponseDto.fromJson(decoded);
-      if (output.userName.isEmpty || output.jwt.isEmpty) {
+      if (output.userName.isEmpty ||
+          output.jwt.isEmpty ||
+          output.refreshToken.isEmpty) {
         throw const AuthException(
-          message: 'A API nao retornou nome do usuario e JWT validos.',
+          message: 'A API nao retornou nome do usuario e tokens validos.',
         );
       }
 
@@ -58,6 +61,66 @@ class AuthService {
       throw const AuthException(
         message: 'Usuario ou senha incorretos.',
         isInvalidCredentials: true,
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<LoginResponseDto> refresh(String refreshToken) async {
+    final sanitized = refreshToken.trim();
+    if (sanitized.isEmpty) {
+      throw const AuthException(
+        message: 'Sessao expirada. Faca login novamente.',
+        isUnauthorized: true,
+      );
+    }
+
+    final client = HttpClient();
+
+    try {
+      final request = await client.postUrl(_refreshUri);
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'refreshToken': sanitized}));
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (response.statusCode == HttpStatus.unauthorized) {
+          throw const AuthException(
+            message: 'Sessao expirada. Faca login novamente.',
+            isUnauthorized: true,
+          );
+        }
+
+        throw AuthException(
+          message:
+              _extractApiErrorMessage(responseBody) ??
+              'Nao foi possivel renovar a sessao.',
+        );
+      }
+
+      final decoded = jsonDecode(responseBody);
+      if (decoded is! Map<String, dynamic>) {
+        throw const AuthException(message: 'Resposta de refresh invalida.');
+      }
+
+      final output = LoginResponseDto.fromJson(decoded);
+      if (output.jwt.isEmpty || output.refreshToken.isEmpty) {
+        throw const AuthException(
+          message: 'A API nao retornou tokens validos para renovar a sessao.',
+        );
+      }
+
+      return output;
+    } on SocketException {
+      throw const AuthException(
+        message: 'Nao foi possivel conectar ao servico para renovar a sessao.',
+      );
+    } on FormatException {
+      throw const AuthException(
+        message: 'Resposta invalida do servico para renovar a sessao.',
       );
     } finally {
       client.close(force: true);
@@ -109,7 +172,10 @@ class AuthService {
 
       final response = await request.close();
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw const AuthException(message: 'Falha ao finalizar a sessao.');
+        throw AuthException(
+          message: 'Falha ao finalizar a sessao.',
+          isUnauthorized: response.statusCode == HttpStatus.unauthorized,
+        );
       }
     } on SocketException {
       throw const AuthException(message: 'Falha ao finalizar a sessao.');
@@ -134,6 +200,13 @@ class AuthService {
       final responseBody = await response.transform(utf8.decoder).join();
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (response.statusCode == HttpStatus.unauthorized) {
+          throw const AuthException(
+            message: 'Sessao expirada. Faca login novamente.',
+            isUnauthorized: true,
+          );
+        }
+
         throw AuthException(
           message:
               _extractApiErrorMessage(responseBody) ??
@@ -214,10 +287,12 @@ class AuthException implements Exception {
   const AuthException({
     required this.message,
     this.isInvalidCredentials = false,
+    this.isUnauthorized = false,
   });
 
   final String message;
   final bool isInvalidCredentials;
+  final bool isUnauthorized;
 
   @override
   String toString() => message;

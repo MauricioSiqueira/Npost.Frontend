@@ -6,6 +6,7 @@ import '../../../notation/data/models/notation_list_item.dart';
 import '../../../notation/data/repositories/notation_repository.dart';
 import '../../../notation/data/services/notation_service.dart';
 import '../../../notation/presentation/pages/notation_editor_page.dart';
+import '../../../notation/presentation/pages/notation_search_page.dart';
 import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   late final NotationRepository _notationRepository;
 
   bool _isLoggingOut = false;
+  bool _isHandlingUnauthorized = false;
   bool _isCreatingNotation = false;
   String? _activeNotationId;
   late Future<List<NotationListItem>> _notationsFuture;
@@ -40,8 +42,17 @@ class _HomePageState extends State<HomePage> {
     _notationsFuture = _fetchNotations();
   }
 
-  Future<List<NotationListItem>> _fetchNotations() {
-    return _notationRepository.getList();
+  Future<List<NotationListItem>> _fetchNotations() async {
+    try {
+      return await _notationRepository.getList();
+    } on NotationException catch (error) {
+      if (error.isUnauthorized) {
+        await _handleUnauthorizedSession();
+        return const [];
+      }
+
+      rethrow;
+    }
   }
 
   Future<void> _reloadNotations() async {
@@ -77,6 +88,11 @@ class _HomePageState extends State<HomePage> {
         await _reloadNotations();
       }
     } on NotationException catch (error) {
+      if (error.isUnauthorized) {
+        await _handleUnauthorizedSession();
+        return;
+      }
+
       if (!mounted) {
         return;
       }
@@ -123,6 +139,11 @@ class _HomePageState extends State<HomePage> {
         await _reloadNotations();
       }
     } on NotationException catch (error) {
+      if (error.isUnauthorized) {
+        await _handleUnauthorizedSession();
+        return;
+      }
+
       if (!mounted) {
         return;
       }
@@ -139,35 +160,32 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _openSearchPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotationSearchPage(
+          notationRepository: _notationRepository,
+          authRepository: widget.authRepository,
+          onToggleTheme: widget.onToggleTheme,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      await _reloadNotations();
+    }
+  }
+
   Future<void> _logout() async {
     setState(() {
       _isLoggingOut = true;
     });
 
+    AuthException? error;
     try {
       await widget.authRepository.logout();
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (_) => LoginPage(
-            authRepository: widget.authRepository,
-            onThemeChanged: (_) {},
-            onToggleTheme: widget.onToggleTheme,
-          ),
-        ),
-        (route) => false,
-      );
-    } on AuthException catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } on AuthException catch (caught) {
+      error = caught;
     } finally {
       if (mounted) {
         setState(() {
@@ -175,6 +193,46 @@ class _HomePageState extends State<HomePage> {
         });
       }
     }
+
+    if (!mounted) {
+      return;
+    }
+
+    if (error != null && !error.isUnauthorized) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
+
+    _openLoginPage();
+  }
+
+  Future<void> _handleUnauthorizedSession() async {
+    if (_isHandlingUnauthorized) {
+      return;
+    }
+
+    _isHandlingUnauthorized = true;
+    await widget.authRepository.clearSession();
+
+    if (!mounted) {
+      return;
+    }
+
+    _openLoginPage();
+  }
+
+  void _openLoginPage() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => LoginPage(
+          authRepository: widget.authRepository,
+          onThemeChanged: (_) {},
+          onToggleTheme: widget.onToggleTheme,
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   @override
@@ -224,6 +282,26 @@ class _HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(strokeWidth: 2.1),
               )
             : const Icon(Icons.edit_outlined),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          child: Row(
+            children: [
+              _TopIconButton(
+                tooltip: 'Pesquisar anotacoes',
+                onTap: () {
+                  _openSearchPage();
+                },
+                icon: Icons.search_rounded,
+                surfaceColor: pillColor,
+                outlineColor: outlineColor,
+                iconColor: theme.colorScheme.onSurface,
+              ),
+            ],
+          ),
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -365,8 +443,18 @@ class _HomePageState extends State<HomePage> {
                         }
 
                         if (snapshot.hasError) {
-                          final message = snapshot.error is NotationException
-                              ? (snapshot.error as NotationException).message
+                          final exception = snapshot.error;
+                          if (exception is NotationException &&
+                              exception.isUnauthorized) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _handleUnauthorizedSession();
+                            });
+
+                            return const SizedBox.shrink();
+                          }
+
+                          final message = exception is NotationException
+                              ? exception.message
                               : 'Nao foi possivel carregar as anotacoes.';
 
                           return Center(

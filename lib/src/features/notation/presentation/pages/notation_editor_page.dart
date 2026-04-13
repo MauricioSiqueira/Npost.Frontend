@@ -173,7 +173,6 @@ class _NotationEditorPageState extends State<NotationEditorPage>
         return;
       }
     } on NotationException catch (error) {
-      _saveQueued = true;
       if (!mounted) {
         return;
       }

@@ -8,6 +8,7 @@ class AuthLocalDataSource {
     : _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   static const _jwtKey = 'auth.jwt';
+  static const _refreshTokenKey = 'auth.refresh_token';
   static const _userNameKey = 'auth.user_name';
   static const _emailKey = 'auth.email';
   static const _darkModeKey = 'auth.dark_mode';
@@ -21,6 +22,10 @@ class AuthLocalDataSource {
   }) async {
     if (persistSession) {
       await _secureStorage.write(key: _jwtKey, value: session.jwt);
+      await _secureStorage.write(
+        key: _refreshTokenKey,
+        value: session.refreshToken,
+      );
       await _secureStorage.write(key: _userNameKey, value: session.userName);
       await _secureStorage.write(key: _emailKey, value: session.email);
       await _secureStorage.write(
@@ -28,6 +33,7 @@ class AuthLocalDataSource {
         value: session.darkMode.toString(),
       );
       _webSessionStorage.delete(_jwtKey);
+      _webSessionStorage.delete(_refreshTokenKey);
       _webSessionStorage.delete(_userNameKey);
       _webSessionStorage.delete(_emailKey);
       _webSessionStorage.delete(_darkModeKey);
@@ -35,10 +41,12 @@ class AuthLocalDataSource {
     }
 
     await _secureStorage.delete(key: _jwtKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
     await _secureStorage.delete(key: _userNameKey);
     await _secureStorage.delete(key: _emailKey);
     await _secureStorage.delete(key: _darkModeKey);
     _webSessionStorage.write(_jwtKey, session.jwt);
+    _webSessionStorage.write(_refreshTokenKey, session.refreshToken);
     _webSessionStorage.write(_userNameKey, session.userName);
     _webSessionStorage.write(_emailKey, session.email);
     _webSessionStorage.write(_darkModeKey, session.darkMode.toString());
@@ -46,6 +54,7 @@ class AuthLocalDataSource {
 
   Future<AuthSession?> readSession() async {
     final sessionJwt = _webSessionStorage.read(_jwtKey);
+    final sessionRefreshToken = _webSessionStorage.read(_refreshTokenKey);
     final sessionUserName = _webSessionStorage.read(_userNameKey);
     final sessionEmail = _webSessionStorage.read(_emailKey);
     final sessionDarkMode = _webSessionStorage.read(_darkModeKey);
@@ -56,10 +65,12 @@ class AuthLocalDataSource {
         email: sessionEmail ?? '',
         darkMode: sessionDarkMode == 'true',
         jwt: sessionJwt,
+        refreshToken: sessionRefreshToken ?? '',
       );
     }
 
     final jwt = await _secureStorage.read(key: _jwtKey);
+    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
     final userName = await _secureStorage.read(key: _userNameKey);
     final email = await _secureStorage.read(key: _emailKey);
     final darkMode = await _secureStorage.read(key: _darkModeKey);
@@ -73,6 +84,7 @@ class AuthLocalDataSource {
       email: email ?? '',
       darkMode: darkMode == 'true',
       jwt: jwt,
+      refreshToken: refreshToken ?? '',
     );
   }
 
@@ -83,6 +95,7 @@ class AuthLocalDataSource {
 
     if (hasWebSession) {
       _webSessionStorage.write(_jwtKey, session.jwt);
+      _webSessionStorage.write(_refreshTokenKey, session.refreshToken);
       _webSessionStorage.write(_userNameKey, session.userName);
       _webSessionStorage.write(_emailKey, session.email);
       _webSessionStorage.write(_darkModeKey, session.darkMode.toString());
@@ -90,6 +103,10 @@ class AuthLocalDataSource {
     }
 
     await _secureStorage.write(key: _jwtKey, value: session.jwt);
+    await _secureStorage.write(
+      key: _refreshTokenKey,
+      value: session.refreshToken,
+    );
     await _secureStorage.write(key: _userNameKey, value: session.userName);
     await _secureStorage.write(key: _emailKey, value: session.email);
     await _secureStorage.write(
@@ -100,10 +117,12 @@ class AuthLocalDataSource {
 
   Future<void> clearSession() async {
     await _secureStorage.delete(key: _jwtKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
     await _secureStorage.delete(key: _userNameKey);
     await _secureStorage.delete(key: _emailKey);
     await _secureStorage.delete(key: _darkModeKey);
     _webSessionStorage.delete(_jwtKey);
+    _webSessionStorage.delete(_refreshTokenKey);
     _webSessionStorage.delete(_userNameKey);
     _webSessionStorage.delete(_emailKey);
     _webSessionStorage.delete(_darkModeKey);

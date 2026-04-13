@@ -5,6 +5,7 @@ class SessionManager {
 
   AuthSession? get currentSession => _currentSession;
   String? get jwt => _currentSession?.jwt;
+  String? get refreshToken => _currentSession?.refreshToken;
   bool get isAuthenticated => _currentSession?.isAuthenticated ?? false;
 
   Map<String, String> get authorizationHeaders {

@@ -68,6 +68,18 @@ class _NpostAppState extends State<NpostApp> {
       setState(() {
         _themeMode = savedDarkMode ? ThemeMode.dark : ThemeMode.light;
       });
+    } on AuthException catch (error) {
+      if (error.isUnauthorized) {
+        await widget._authRepository.clearSession();
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _themeMode = previousThemeMode;
+      });
     } catch (_) {
       if (!mounted) {
         return;
