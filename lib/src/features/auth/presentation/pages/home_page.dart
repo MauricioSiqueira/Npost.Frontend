@@ -299,7 +299,7 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _TopIconButton(
-              tooltip: 'Pesquisar anotacões',
+              tooltip: 'Pesquisar anotações',
               onTap: () {
                 _openSearchPage();
               },
@@ -309,7 +309,7 @@ class _HomePageState extends State<HomePage> {
               iconColor: theme.colorScheme.onSurface,
             ),
             _TopIconButton(
-              tooltip: 'Nova anotacão',
+              tooltip: 'Nova anotação',
               onTap: _createNotation,
               icon: Icons.edit_outlined,
               surfaceColor: surfaceColor,
@@ -448,7 +448,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Text('Suas anotacões', style: theme.textTheme.headlineLarge),
+                  Text('Suas anotações', style: theme.textTheme.headlineLarge),
                   const SizedBox(height: 16),
                   Expanded(
                     child: FutureBuilder<List<NotationListItem>>(
@@ -473,7 +473,7 @@ class _HomePageState extends State<HomePage> {
 
                           final message = exception is NotationException
                               ? exception.message
-                              : 'Não foi possível carregar as anotacões.';
+                              : 'Não foi possível carregar as anotações.';
 
                           return Center(
                             child: Column(
@@ -498,7 +498,7 @@ class _HomePageState extends State<HomePage> {
                         if (notations.isEmpty) {
                           return Center(
                             child: Text(
-                              'Você ainda não possui anotacões.',
+                              'Você ainda não possui anotações.',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyLarge,
                             ),

@@ -146,10 +146,10 @@ class _NotationEditorPageState extends State<NotationEditorPage>
     if (title.isEmpty) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Informe um titulo para a anotacao.';
+          _errorMessage = 'Informe um titulo para a anotação.';
         });
       } else {
-        _errorMessage = 'Informe um titulo para a anotacao.';
+        _errorMessage = 'Informe um titulo para a anotação.';
       }
       return;
     }
@@ -291,7 +291,7 @@ class _NotationEditorPageState extends State<NotationEditorPage>
       },
       child: Scaffold(
         floatingActionButton: Tooltip(
-          message: 'Nova anotacao',
+          message: 'Nova anotação',
           child: Material(
             color: pillColor,
             borderRadius: BorderRadius.circular(16),

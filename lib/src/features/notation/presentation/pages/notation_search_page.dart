@@ -247,7 +247,7 @@ class _NotationSearchPageState extends State<NotationSearchPage> {
                               autofocus: true,
                               textInputAction: TextInputAction.search,
                               decoration: const InputDecoration(
-                                hintText: 'Buscar por titulo',
+                                hintText: 'Buscar por título',
                                 filled: false,
                                 fillColor: Colors.transparent,
                                 border: InputBorder.none,
@@ -319,7 +319,7 @@ class _NotationSearchPageState extends State<NotationSearchPage> {
     if (_notations.isEmpty && !_isSearching) {
       return Center(
         child: Text(
-          'Nenhuma anotacao encontrada.',
+          'Nenhuma anotação encontrada.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge,
         ),
