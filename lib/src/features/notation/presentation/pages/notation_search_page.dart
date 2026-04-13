@@ -118,6 +118,8 @@ class _NotationSearchPageState extends State<NotationSearchPage> {
           builder: (_) => NotationEditorPage(
             notationId: notation.notationId,
             notationRepository: widget.notationRepository,
+            authRepository: widget.authRepository,
+            onToggleTheme: widget.onToggleTheme,
             initialNotation: details,
           ),
         ),

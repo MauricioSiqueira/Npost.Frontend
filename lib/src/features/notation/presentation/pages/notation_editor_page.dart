@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../auth/data/repositories/auth_repository.dart';
+import '../../../auth/presentation/pages/home_page.dart';
 import '../../data/models/notation_details.dart';
 import '../../data/repositories/notation_repository.dart';
 import '../../data/services/notation_service.dart';
@@ -12,11 +14,15 @@ class NotationEditorPage extends StatefulWidget {
     super.key,
     required this.notationId,
     required this.notationRepository,
+    required this.authRepository,
+    required this.onToggleTheme,
     this.initialNotation,
   });
 
   final String notationId;
   final NotationRepository notationRepository;
+  final AuthRepository authRepository;
+  final Future<void> Function() onToggleTheme;
   final NotationDetails? initialNotation;
 
   @override
@@ -225,6 +231,8 @@ class _NotationEditorPageState extends State<NotationEditorPage>
           builder: (_) => NotationEditorPage(
             notationId: notation.notationId,
             notationRepository: widget.notationRepository,
+            authRepository: widget.authRepository,
+            onToggleTheme: widget.onToggleTheme,
             initialNotation: notation,
           ),
         ),
@@ -246,6 +254,18 @@ class _NotationEditorPageState extends State<NotationEditorPage>
     }
   }
 
+  void _goToHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => HomePage(
+          authRepository: widget.authRepository,
+          onToggleTheme: widget.onToggleTheme,
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -264,10 +284,9 @@ class _NotationEditorPageState extends State<NotationEditorPage>
           return;
         }
 
-        final navigator = Navigator.of(context);
         await _flushPendingSave();
         if (mounted) {
-          navigator.pop();
+          _goToHome();
         }
       },
       child: Scaffold(
@@ -304,7 +323,19 @@ class _NotationEditorPageState extends State<NotationEditorPage>
             ),
           ),
         ),
-        appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () async {
+              await _flushPendingSave();
+              if (mounted) {
+                _goToHome();
+              }
+            },
+          ),
+        ),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),

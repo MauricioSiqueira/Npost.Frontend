@@ -79,6 +79,8 @@ class _HomePageState extends State<HomePage> {
           builder: (_) => NotationEditorPage(
             notationId: notationId,
             notationRepository: _notationRepository,
+            authRepository: widget.authRepository,
+            onToggleTheme: widget.onToggleTheme,
             initialNotation: notation,
           ),
         ),
@@ -130,6 +132,8 @@ class _HomePageState extends State<HomePage> {
           builder: (_) => NotationEditorPage(
             notationId: notation.notationId,
             notationRepository: _notationRepository,
+            authRepository: widget.authRepository,
+            onToggleTheme: widget.onToggleTheme,
             initialNotation: notation,
           ),
         ),
@@ -384,7 +388,7 @@ class _HomePageState extends State<HomePage> {
                                   else
                                     const Icon(Icons.logout, size: 18),
                                   const SizedBox(width: 10),
-                                  const Text('Logoff'),
+                                  const Text('Log out'),
                                 ],
                               ),
                             ),
