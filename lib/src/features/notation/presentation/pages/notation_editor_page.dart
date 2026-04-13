@@ -31,6 +31,7 @@ class _NotationEditorPageState extends State<NotationEditorPage>
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isCreatingNotation = false;
   bool _isDirty = false;
   bool _saveQueued = false;
   bool _hasLoadedInitialValue = false;
@@ -194,9 +195,67 @@ class _NotationEditorPageState extends State<NotationEditorPage>
     }
   }
 
+  Future<void> _createAnotherNotation() async {
+    if (_isCreatingNotation) {
+      return;
+    }
+
+    setState(() {
+      _isCreatingNotation = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _flushPendingSave();
+
+      final created = await widget.notationRepository.createNotation(
+        title: 'Exemplo',
+        content: '',
+      );
+      final notation = await widget.notationRepository.getById(
+        created.notationId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => NotationEditorPage(
+            notationId: notation.notationId,
+            notationRepository: widget.notationRepository,
+            initialNotation: notation,
+          ),
+        ),
+      );
+    } on NotationException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingNotation = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final pillColor = isDark
+        ? const Color(0xFF2A2A2A)
+        : const Color(0xFFF6F1E8);
+    final outlineColor = isDark
+        ? const Color(0xFF353535)
+        : const Color(0xFFE7DDD0);
 
     return PopScope<void>(
       canPop: false,
@@ -212,6 +271,39 @@ class _NotationEditorPageState extends State<NotationEditorPage>
         }
       },
       child: Scaffold(
+        floatingActionButton: Tooltip(
+          message: 'Nova anotacao',
+          child: Material(
+            color: pillColor,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              onTap: _isCreatingNotation ? null : _createAnotherNotation,
+              borderRadius: BorderRadius.circular(16),
+              child: Ink(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: pillColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: outlineColor),
+                ),
+                child: Center(
+                  child: _isCreatingNotation
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
         appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
         body: SafeArea(
           child: Padding(
