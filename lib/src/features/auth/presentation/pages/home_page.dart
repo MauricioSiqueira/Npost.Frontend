@@ -265,42 +265,35 @@ class _HomePageState extends State<HomePage> {
         : 'U';
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _isCreatingNotation ? null : _createNotation,
-        backgroundColor: surfaceColor,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: 0,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: outlineColor),
-        ),
-        child: _isCreatingNotation
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2.1),
-              )
-            : const Icon(Icons.edit_outlined),
-      ),
-      bottomNavigationBar: SafeArea(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-          child: Row(
-            children: [
-              _TopIconButton(
-                tooltip: 'Pesquisar anotacoes',
-                onTap: () {
-                  _openSearchPage();
-                },
-                icon: Icons.search_rounded,
-                surfaceColor: pillColor,
-                outlineColor: outlineColor,
-                iconColor: theme.colorScheme.onSurface,
-              ),
-            ],
-          ),
+        minimum: const EdgeInsets.fromLTRB(18, 0, 18, 0),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _TopIconButton(
+              tooltip: 'Pesquisar anotacoes',
+              onTap: () {
+                _openSearchPage();
+              },
+              icon: Icons.search_rounded,
+              surfaceColor: pillColor,
+              outlineColor: outlineColor,
+              iconColor: theme.colorScheme.onSurface,
+            ),
+            _TopIconButton(
+              tooltip: 'Nova anotacao',
+              onTap: _createNotation,
+              icon: Icons.edit_outlined,
+              surfaceColor: surfaceColor,
+              outlineColor: outlineColor,
+              iconColor: theme.colorScheme.onSurface,
+              isLoading: _isCreatingNotation,
+              enabled: !_isCreatingNotation,
+            ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -572,6 +565,8 @@ class _TopIconButton extends StatelessWidget {
     required this.surfaceColor,
     required this.outlineColor,
     required this.iconColor,
+    this.isLoading = false,
+    this.enabled = true,
   });
 
   final String tooltip;
@@ -580,6 +575,8 @@ class _TopIconButton extends StatelessWidget {
   final Color surfaceColor;
   final Color outlineColor;
   final Color iconColor;
+  final bool isLoading;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -589,7 +586,7 @@ class _TopIconButton extends StatelessWidget {
         color: surfaceColor,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(16),
           child: Ink(
             width: 44,
@@ -599,7 +596,15 @@ class _TopIconButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: outlineColor),
             ),
-            child: Icon(icon, size: 20, color: iconColor),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(icon, size: 20, color: iconColor),
+            ),
           ),
         ),
       ),
